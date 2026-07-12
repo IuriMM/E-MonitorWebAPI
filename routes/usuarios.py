@@ -2,25 +2,27 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List
 from bson import ObjectId
 from database import get_db
-from models import Usuario, UsuarioCreate, UsuarioUpdate
+from models import Usuario, UsuarioCreate, UsuarioUpdate, UsuarioResponse
+from security import get_password_hash
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
-@router.post("/", response_model=Usuario, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
 async def create_usuario(usuario: UsuarioCreate):
     db = get_db()
     usuario_dict = usuario.model_dump()
+    usuario_dict["senha"] = get_password_hash(usuario_dict["senha"])
     result = await db.usuarios.insert_one(usuario_dict)
     created_usuario = await db.usuarios.find_one({"_id": result.inserted_id})
     return created_usuario
 
-@router.get("/", response_model=List[Usuario])
+@router.get("/", response_model=List[UsuarioResponse])
 async def list_usuarios():
     db = get_db()
     usuarios = await db.usuarios.find().to_list(1000)
     return usuarios
 
-@router.get("/{id}", response_model=Usuario)
+@router.get("/{id}", response_model=UsuarioResponse)
 async def get_usuario(id: str):
     db = get_db()
     if not ObjectId.is_valid(id):
@@ -30,12 +32,16 @@ async def get_usuario(id: str):
         raise HTTPException(status_code=404, detail="Usuario not found")
     return usuario
 
-@router.put("/{id}", response_model=Usuario)
+@router.put("/{id}", response_model=UsuarioResponse)
 async def update_usuario(id: str, usuario_update: UsuarioUpdate):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
     update_data = {k: v for k, v in usuario_update.model_dump().items() if v is not None}
+    
+    if "senha" in update_data:
+        update_data["senha"] = get_password_hash(update_data["senha"])
+
     if update_data:
         result = await db.usuarios.update_one({"_id": ObjectId(id)}, {"$set": update_data})
         if result.matched_count == 0:

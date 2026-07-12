@@ -8,9 +8,19 @@ class Usuario(BaseDBModel):
     fotoPerfil: bool = False
     curso: str
     matricula: str
+    senha: str
     materias: List[str] = []
 
 class UsuarioCreate(BaseModel):
+    nome: str
+    sobrenome: str
+    fotoPerfil: bool = False
+    curso: str
+    matricula: str
+    senha: str
+    materias: List[str] = []
+
+class UsuarioResponse(BaseDBModel):
     nome: str
     sobrenome: str
     fotoPerfil: bool = False
@@ -24,4 +34,5 @@ class UsuarioUpdate(BaseModel):
     fotoPerfil: Optional[bool] = None
     curso: Optional[str] = None
     matricula: Optional[str] = None
+    senha: Optional[str] = None
     materias: Optional[List[str]] = None

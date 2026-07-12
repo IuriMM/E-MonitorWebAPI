@@ -3,3 +3,4 @@ uvicorn
 motor
 pydantic
 pydantic[email]
+passlib[bcrypt]
