@@ -1,0 +1,96 @@
+{
+  "Materias": {
+    "MAT032": {
+      "nome": "Calculo A",
+      "monitores": ["José", "Maria"],
+      "cronograma": [
+        {"dia_semana": "SEG", "horario": "14:00 - 16:00", "sala": "Sala 1"}, 
+        {"dia_semana": "QUA", "horario": "14:00 - 16:00", "sala": "Sala 1"}
+      ]
+    },
+    "COMP902": {
+      "nome": "Programação Orientada a Objetos",
+      "monitores": ["Lorenzo", "Julia"],
+      "cronograma": [
+        {"dia_semana": "TER", "horario": "18:00 - 20:00", "sala": "Sala 1"}, 
+        {"dia_semana": "SEX", "horario": "18:00 - 20:00", "sala": "Sala 1"}
+      ]
+    }
+  },
+  "Provas": [
+    { "nome": "Prova 1", "dia": "2026-05-24", "horario": "14:00 - 16:00", "materia": "MAT032" },
+    { "nome": "Prova 2", "dia": "2026-07-03", "horario": "14:00 - 16:00", "materia": "MAT032" },
+    { "nome": "Prova Final", "dia": "2026-08-07", "horario": "14:00 - 16:00", "materia": "MAT032" },
+    { "nome": "Recuperação", "dia": "2026-09-01", "horario": "14:00 - 16:00", "materia": "MAT032" },
+    { "nome": "Prova 1", "dia": "2026-06-01", "horario": "14:00 - 16:00", "materia": "COMP902" },
+    { "nome": "Prova 2", "dia": "2026-07-08", "horario": "14:00 - 16:00", "materia": "COMP902" },
+    { "nome": "Prova Final", "dia": "2026-08-15", "horario": "14:00 - 16:00", "materia": "COMP902" },
+    { "nome": "Recuperação", "dia": "2026-09-01", "horario": "14:00 - 16:00", "materia": "COMP902" }
+  ],
+  "Usuarios": {
+    "nome": "João",
+    "sobrenome": "Miguel da Silva",
+    "fotoPerfil": false,
+    "curso": "Ciencia da Computação",
+    "matricula": "2024210211",
+    "materias": [
+      "Calculo A",
+      "Programação Orientada a Objetos"
+    ]
+  },
+  "Duvidas": [
+    {
+      "id": 1,
+      "materia": "Calculo A",
+      "horario": "15:32",
+      "duvida": "Não entendi como funciona a regra de derivada da função composta",
+      "status": "Respondida",
+      "comentarios": [
+        {
+          "usuario": "José",
+          "classe": "Monitor",
+          "texto": "A regra da cadeia diz que a derivada de f(g(x)) é f'(g(x)) * g'(x). Tente aplicar a derivada de fora e depois multiplique pela derivada de dentro."
+        },
+        {
+          "usuario": "João",
+          "classe": "Aluno",
+          "texto": "Faz sentido, acho que errei na hora de derivar a função de dentro. Valeu!"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "materia": "Programação Orientada a Objetos",
+      "horario": "18:00 - 20:00",
+      "duvida": "Qual a difereca entre classes e objetos?",
+      "status": "Em Andamento",
+      "comentarios": [
+        {
+          "usuario": "Lorenzo",
+          "classe": "Monitor",
+          "texto": "A diferença principal é que a classe é o molde (a planta da casa), e o objeto é a instância criada a partir desse molde (a casa construída)."
+        }
+      ]
+    }
+  ],
+  "Mensagens": {
+    "José": [
+      { "remetente": "José", "texto": "Olá João! Como posso ajudar com Cálculo hoje?", "horario": "10:00" },
+      { "remetente": "João", "texto": "Estou com uma dúvida sobre integrais duplas.", "horario": "10:05" }
+    ],
+    "Maria": [],
+    "Lorenzo": [],
+    "Julia": []
+  },
+  "MateriaisEstudo": [
+    {
+      "id": 1,
+      "materia": "Calculo A",
+      "autor": "José",
+      "titulo": "Lista 1 - Limites e Derivadas",
+      "comentario": "Esta lista foca na introdução às derivadas parciais. Façam os exercícios ímpares.",
+      "link": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "data": "10/07/2026"
+    }
+  ]
+}
