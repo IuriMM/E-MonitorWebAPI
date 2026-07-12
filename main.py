@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import connect_to_mongo, close_mongo_connection
 from routes import router as api_router
@@ -16,6 +17,15 @@ app = FastAPI(
     description="API para o sistema eMonitor usando FastAPI e MongoDB",
     version="1.0.0",
     lifespan=lifespan
+)
+
+# Configuração de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Pode ser restrito ao URL do frontend posteriormente
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(api_router, prefix="/api")
