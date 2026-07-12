@@ -9,6 +9,13 @@ router = APIRouter(prefix="/duvidas", tags=["Duvidas"])
 @router.post("/", response_model=Duvida, status_code=status.HTTP_201_CREATED)
 async def create_duvida(duvida: DuvidaCreate):
     db = get_db()
+    
+    if not ObjectId.is_valid(duvida.usuario):
+        raise HTTPException(status_code=400, detail="Invalid Usuario ID")
+    usuario_exists = await db.usuarios.find_one({"_id": ObjectId(duvida.usuario)})
+    if not usuario_exists:
+        raise HTTPException(status_code=404, detail="Usuario not found")
+        
     duvida_dict = duvida.model_dump()
     result = await db.duvidas.insert_one(duvida_dict)
     created_duvida = await db.duvidas.find_one({"_id": result.inserted_id})
@@ -35,6 +42,14 @@ async def update_duvida(id: str, duvida_update: DuvidaUpdate):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
+        
+    if duvida_update.usuario is not None:
+        if not ObjectId.is_valid(duvida_update.usuario):
+            raise HTTPException(status_code=400, detail="Invalid Usuario ID")
+        usuario_exists = await db.usuarios.find_one({"_id": ObjectId(duvida_update.usuario)})
+        if not usuario_exists:
+            raise HTTPException(status_code=404, detail="Usuario not found")
+
     update_data = {k: v for k, v in duvida_update.model_dump().items() if v is not None}
     if update_data:
         result = await db.duvidas.update_one({"_id": ObjectId(id)}, {"$set": update_data})
