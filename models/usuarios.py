@@ -36,3 +36,7 @@ class UsuarioUpdate(BaseModel):
     matricula: Optional[str] = None
     senha: Optional[str] = None
     materias: Optional[List[str]] = None
+
+class UsuarioLogin(BaseModel):
+    matricula: str
+    senha: str

@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List
 from bson import ObjectId
 from database import get_db
-from models import Usuario, UsuarioCreate, UsuarioUpdate, UsuarioResponse
-from security import get_password_hash
+from models import Usuario, UsuarioCreate, UsuarioUpdate, UsuarioResponse, UsuarioLogin
+from security import get_password_hash, verify_password
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
@@ -15,6 +15,19 @@ async def create_usuario(usuario: UsuarioCreate):
     result = await db.usuarios.insert_one(usuario_dict)
     created_usuario = await db.usuarios.find_one({"_id": result.inserted_id})
     return created_usuario
+
+@router.post("/login", response_model=UsuarioResponse)
+async def login(credentials: UsuarioLogin):
+    db = get_db()
+    usuario = await db.usuarios.find_one({"matricula": credentials.matricula})
+    if not usuario:
+        raise HTTPException(status_code=401, detail="Matrícula ou senha incorretos")
+    
+    if not verify_password(credentials.senha, usuario["senha"]):
+        raise HTTPException(status_code=401, detail="Matrícula ou senha incorretos")
+        
+    return usuario
+
 
 @router.get("/", response_model=List[UsuarioResponse])
 async def list_usuarios():
