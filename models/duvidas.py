@@ -12,7 +12,7 @@ class Duvida(BaseDBModel):
     horario: str
     duvida: str
     status: str
-    usuario: str
+    usuario: Optional[str] = None
     comentarios: List[Comentario] = []
 
 class DuvidaCreate(BaseModel):

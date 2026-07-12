@@ -25,8 +25,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        "https://e-monitorwebapi.onrender.com"
-        # Adicione aqui a URL do frontend em produção no futuro
+        "https://e-monitorwebapi.onrender.com",
+        "https://e-monitor.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
