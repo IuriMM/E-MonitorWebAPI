@@ -22,7 +22,12 @@ app = FastAPI(
 # Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Pode ser restrito ao URL do frontend posteriormente
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://e-monitorwebapi.onrender.com"
+        # Adicione aqui a URL do frontend em produção no futuro
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
