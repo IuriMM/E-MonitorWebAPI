@@ -10,6 +10,7 @@ class Usuario(BaseDBModel):
     matricula: str
     senha: str
     materias: List[str] = []
+    monitor: List[str] = []
 
 class UsuarioCreate(BaseModel):
     nome: str
@@ -19,6 +20,7 @@ class UsuarioCreate(BaseModel):
     matricula: str
     senha: str
     materias: List[str] = []
+    monitor: List[str] = []
 
 class UsuarioResponse(BaseDBModel):
     nome: str
@@ -27,6 +29,7 @@ class UsuarioResponse(BaseDBModel):
     curso: str
     matricula: str
     materias: List[str] = []
+    monitor: List[str] = []
 
 class UsuarioUpdate(BaseModel):
     nome: Optional[str] = None
@@ -36,6 +39,7 @@ class UsuarioUpdate(BaseModel):
     matricula: Optional[str] = None
     senha: Optional[str] = None
     materias: Optional[List[str]] = None
+    monitor: Optional[List[str]] = None
 
 class UsuarioLogin(BaseModel):
     matricula: str
