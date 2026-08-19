@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from bson import ObjectId
 from database import get_db
 from models import Prova, ProvaCreate, ProvaUpdate
+from auth import get_current_user
 
 router = APIRouter(prefix="/provas", tags=["Provas"])
 
 @router.post("/", response_model=Prova, status_code=status.HTTP_201_CREATED)
-async def create_prova(prova: ProvaCreate):
+async def create_prova(prova: ProvaCreate, current_user: dict = Depends(get_current_user)):
     db = get_db()
     prova_dict = prova.model_dump()
     result = await db.provas.insert_one(prova_dict)
@@ -15,13 +16,13 @@ async def create_prova(prova: ProvaCreate):
     return created_prova
 
 @router.get("/", response_model=List[Prova])
-async def list_provas():
+async def list_provas(current_user: dict = Depends(get_current_user)):
     db = get_db()
     provas = await db.provas.find().to_list(1000)
     return provas
 
 @router.get("/{id}", response_model=Prova)
-async def get_prova(id: str):
+async def get_prova(id: str, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
@@ -31,7 +32,7 @@ async def get_prova(id: str):
     return prova
 
 @router.put("/{id}", response_model=Prova)
-async def update_prova(id: str, prova_update: ProvaUpdate):
+async def update_prova(id: str, prova_update: ProvaUpdate, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
@@ -40,12 +41,12 @@ async def update_prova(id: str, prova_update: ProvaUpdate):
         result = await db.provas.update_one({"_id": ObjectId(id)}, {"$set": update_data})
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Prova not found")
-    
+
     updated_prova = await db.provas.find_one({"_id": ObjectId(id)})
     return updated_prova
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_prova(id: str):
+async def delete_prova(id: str, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")

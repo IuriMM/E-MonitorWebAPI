@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from bson import ObjectId
 from database import get_db
-from models import Usuario, UsuarioCreate, UsuarioUpdate, UsuarioResponse, UsuarioLogin
+from models import Usuario, UsuarioCreate, UsuarioUpdate, UsuarioResponse, UsuarioLogin, Token
 from security import get_password_hash, verify_password
+from auth import create_access_token, get_current_user
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
@@ -16,27 +17,28 @@ async def create_usuario(usuario: UsuarioCreate):
     created_usuario = await db.usuarios.find_one({"_id": result.inserted_id})
     return created_usuario
 
-@router.post("/login", response_model=UsuarioResponse)
+@router.post("/login", response_model=Token)
 async def login(credentials: UsuarioLogin):
     db = get_db()
     usuario = await db.usuarios.find_one({"matricula": credentials.matricula})
     if not usuario:
         raise HTTPException(status_code=401, detail="Matrícula ou senha incorretos")
-    
+
     if not verify_password(credentials.senha, usuario["senha"]):
         raise HTTPException(status_code=401, detail="Matrícula ou senha incorretos")
-        
-    return usuario
+
+    access_token = create_access_token(str(usuario["_id"]), usuario["matricula"])
+    return Token(access_token=access_token, usuario=usuario)
 
 
 @router.get("/", response_model=List[UsuarioResponse])
-async def list_usuarios():
+async def list_usuarios(current_user: dict = Depends(get_current_user)):
     db = get_db()
     usuarios = await db.usuarios.find().to_list(1000)
     return usuarios
 
 @router.get("/{id}", response_model=UsuarioResponse)
-async def get_usuario(id: str):
+async def get_usuario(id: str, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
@@ -46,12 +48,14 @@ async def get_usuario(id: str):
     return usuario
 
 @router.put("/{id}", response_model=UsuarioResponse)
-async def update_usuario(id: str, usuario_update: UsuarioUpdate):
+async def update_usuario(id: str, usuario_update: UsuarioUpdate, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
+    if str(current_user["_id"]) != id:
+        raise HTTPException(status_code=403, detail="Você só pode atualizar o seu próprio usuário")
     update_data = {k: v for k, v in usuario_update.model_dump().items() if v is not None}
-    
+
     if "senha" in update_data:
         update_data["senha"] = get_password_hash(update_data["senha"])
 
@@ -59,15 +63,17 @@ async def update_usuario(id: str, usuario_update: UsuarioUpdate):
         result = await db.usuarios.update_one({"_id": ObjectId(id)}, {"$set": update_data})
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Usuario not found")
-    
+
     updated_usuario = await db.usuarios.find_one({"_id": ObjectId(id)})
     return updated_usuario
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_usuario(id: str):
+async def delete_usuario(id: str, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
+    if str(current_user["_id"]) != id:
+        raise HTTPException(status_code=403, detail="Você só pode excluir o seu próprio usuário")
     result = await db.usuarios.delete_one({"_id": ObjectId(id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Usuario not found")

@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
-from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
 from bson import ObjectId
 from database import get_db
 from models import MaterialEstudo, MaterialEstudoCreate, MaterialEstudoUpdate
+from auth import get_current_user
 
 router = APIRouter(prefix="/materiais_estudo", tags=["Materiais Estudo"])
 
 @router.post("/", response_model=MaterialEstudo, status_code=status.HTTP_201_CREATED)
-async def create_material_estudo(material_estudo: MaterialEstudoCreate):
+async def create_material_estudo(material_estudo: MaterialEstudoCreate, current_user: dict = Depends(get_current_user)):
     db = get_db()
     material_dict = material_estudo.model_dump()
     result = await db.materiais_estudo.insert_one(material_dict)
@@ -15,13 +16,27 @@ async def create_material_estudo(material_estudo: MaterialEstudoCreate):
     return created_material
 
 @router.get("/", response_model=List[MaterialEstudo])
-async def list_materiais_estudo():
+async def list_materiais_estudo(
+    materia: Optional[str] = None,
+    autor: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+):
     db = get_db()
-    materiais = await db.materiais_estudo.find().to_list(1000)
+
+    if autor is not None and autor != current_user["nome"]:
+        raise HTTPException(status_code=403, detail="Você só pode filtrar os seus próprios materiais")
+
+    query = {}
+    if materia is not None:
+        query["materia"] = materia
+    if autor is not None:
+        query["autor"] = autor
+
+    materiais = await db.materiais_estudo.find(query).to_list(1000)
     return materiais
 
 @router.get("/{id}", response_model=MaterialEstudo)
-async def get_material_estudo(id: str):
+async def get_material_estudo(id: str, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
@@ -31,7 +46,7 @@ async def get_material_estudo(id: str):
     return material
 
 @router.put("/{id}", response_model=MaterialEstudo)
-async def update_material_estudo(id: str, material_update: MaterialEstudoUpdate):
+async def update_material_estudo(id: str, material_update: MaterialEstudoUpdate, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
@@ -40,12 +55,12 @@ async def update_material_estudo(id: str, material_update: MaterialEstudoUpdate)
         result = await db.materiais_estudo.update_one({"_id": ObjectId(id)}, {"$set": update_data})
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="MaterialEstudo not found")
-    
+
     updated_material = await db.materiais_estudo.find_one({"_id": ObjectId(id)})
     return updated_material
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_material_estudo(id: str):
+async def delete_material_estudo(id: str, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")

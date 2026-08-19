@@ -44,3 +44,8 @@ class UsuarioUpdate(BaseModel):
 class UsuarioLogin(BaseModel):
     matricula: str
     senha: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    usuario: UsuarioResponse

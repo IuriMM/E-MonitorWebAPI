@@ -20,7 +20,6 @@ class DuvidaCreate(BaseModel):
     horario: str
     duvida: str
     status: str
-    usuario: str
     comentarios: List[Comentario] = []
 
 class DuvidaUpdate(BaseModel):
