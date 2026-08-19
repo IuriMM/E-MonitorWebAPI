@@ -3,7 +3,7 @@ from typing import List
 from bson import ObjectId
 from pymongo.errors import DuplicateKeyError
 from database import get_db
-from models import Usuario, UsuarioCreate, UsuarioUpdate, UsuarioResponse, UsuarioLogin, Token
+from models import Usuario, UsuarioCreate, UsuarioUpdate, UsuarioResponse, UsuarioLogin, Token, Papel
 from security import get_password_hash, verify_password
 from auth import create_access_token, get_current_user
 
@@ -14,6 +14,8 @@ async def create_usuario(usuario: UsuarioCreate):
     db = get_db()
     usuario_dict = usuario.model_dump()
     usuario_dict["senha"] = get_password_hash(usuario_dict["senha"])
+    # papel nunca vem do cliente: cadastro público sempre nasce aluno.
+    usuario_dict["papel"] = Papel.ALUNO.value
     try:
         result = await db.usuarios.insert_one(usuario_dict)
     except DuplicateKeyError:
@@ -31,7 +33,8 @@ async def login(credentials: UsuarioLogin):
     if not verify_password(credentials.senha, usuario["senha"]):
         raise HTTPException(status_code=401, detail="Matrícula ou senha incorretos")
 
-    access_token = create_access_token(str(usuario["_id"]), usuario["matricula"], usuario["nome"])
+    papel = Papel(usuario.get("papel", Papel.ALUNO.value))
+    access_token = create_access_token(str(usuario["_id"]), usuario["matricula"], usuario["nome"], papel)
     return Token(access_token=access_token, usuario=usuario)
 
 

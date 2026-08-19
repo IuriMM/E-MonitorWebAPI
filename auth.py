@@ -8,6 +8,7 @@ from fastapi import Depends, HTTPException, Query, WebSocket, WebSocketException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from config import ALLOWED_ORIGINS
+from models import Papel
 
 # Padrão: usar uma chave de desenvolvimento, mas deve ser sobreposta via variável de ambiente em produção
 SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-secret-key-nao-usar-em-producao")
@@ -17,9 +18,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 horas
 bearer_scheme = HTTPBearer()
 
 
-def create_access_token(usuario_id: str, matricula: str, nome: str) -> str:
+def create_access_token(usuario_id: str, matricula: str, nome: str, papel: Papel) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    payload = {"sub": usuario_id, "matricula": matricula, "nome": nome, "exp": expire}
+    payload = {"sub": usuario_id, "matricula": matricula, "nome": nome, "papel": papel.value, "exp": expire}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -37,7 +38,19 @@ def _decode_token(token: str) -> Optional[dict]:
     if not usuario_id or not ObjectId.is_valid(usuario_id) or not nome:
         return None
 
-    return {"_id": ObjectId(usuario_id), "nome": nome, "matricula": payload.get("matricula")}
+    # Tokens emitidos antes do campo `papel` existir não têm essa claim;
+    # cai no papel menos privilegiado em vez de quebrar sessões já ativas.
+    try:
+        papel = Papel(payload.get("papel", Papel.ALUNO.value))
+    except ValueError:
+        papel = Papel.ALUNO
+
+    return {
+        "_id": ObjectId(usuario_id),
+        "nome": nome,
+        "matricula": payload.get("matricula"),
+        "papel": papel,
+    }
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> dict:
@@ -60,3 +73,16 @@ async def get_current_user_ws(websocket: WebSocket, token: str = Query(...)) -> 
     if usuario is None:
         raise WebSocketException(code=4401, reason="Token inválido ou expirado")
     return usuario
+
+
+def require_role(*allowed: Papel):
+    """Dependency factory: só deixa passar quem tem um dos papéis em `allowed`.
+    current_user segue dict (não o model Usuario) para manter o dependency
+    stateless igual get_current_user — nenhuma chamada extra ao Mongo."""
+
+    async def checker(current_user: dict = Depends(get_current_user)) -> dict:
+        if current_user["papel"] not in allowed:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Ação não permitida para seu papel.")
+        return current_user
+
+    return checker

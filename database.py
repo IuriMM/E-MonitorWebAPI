@@ -14,6 +14,7 @@ async def connect_to_mongo():
     db = client[DB_NAME]
     print(f"Conectado ao MongoDB: {MONGODB_URL} no banco {DB_NAME}")
     await create_indexes()
+    await backfill_papel_usuarios()
 
 async def create_indexes():
     await db.usuarios.create_index("matricula", unique=True)
@@ -21,6 +22,11 @@ async def create_indexes():
     await db.duvidas.create_index([("materia", 1), ("status", 1)])
     await db.mensagens.create_index([("remetente", 1), ("destinatario", 1)])
     await db.materiais_estudo.create_index([("materia", 1), ("autor", 1)])
+
+async def backfill_papel_usuarios():
+    """Usuários cadastrados antes do campo `papel` existir não o têm no Mongo.
+    Idempotente: a partir da segunda execução não há mais docs sem o campo."""
+    await db.usuarios.update_many({"papel": {"$exists": False}}, {"$set": {"papel": "aluno"}})
 
 async def close_mongo_connection():
     global client

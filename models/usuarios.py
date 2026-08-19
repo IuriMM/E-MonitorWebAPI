@@ -1,6 +1,12 @@
+from enum import Enum
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from .base import BaseDBModel
+
+class Papel(str, Enum):
+    ALUNO = "aluno"
+    MONITOR = "monitor"
+    ADMIN = "admin"
 
 class Usuario(BaseDBModel):
     nome: str
@@ -9,9 +15,14 @@ class Usuario(BaseDBModel):
     curso: str
     matricula: str
     senha: str
+    papel: Papel = Papel.ALUNO
     materias: List[str] = []
     monitor: List[str] = []
 
+# `papel` propositalmente fora de UsuarioCreate/UsuarioUpdate: o cadastro público
+# e a auto-edição (PUT /usuarios/{id}, restrito ao dono) nunca podem setar o
+# próprio papel. Promoção a monitor/admin só via seed manual no banco ou uma
+# rota futura restrita a admin.
 class UsuarioCreate(BaseModel):
     nome: str
     sobrenome: str
@@ -28,6 +39,7 @@ class UsuarioResponse(BaseDBModel):
     fotoPerfil: bool = False
     curso: str
     matricula: str
+    papel: Papel = Papel.ALUNO
     materias: List[str] = []
     monitor: List[str] = []
 
