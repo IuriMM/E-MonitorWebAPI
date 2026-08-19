@@ -22,6 +22,8 @@ async def list_duvidas(
     usuario: Optional[str] = None,
     materia: Optional[str] = None,
     status_filter: Optional[str] = Query(None, alias="status"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     current_user: dict = Depends(get_current_user),
 ):
     db = get_db()
@@ -37,7 +39,7 @@ async def list_duvidas(
     if status_filter is not None:
         query["status"] = status_filter
 
-    duvidas = await db.duvidas.find(query).to_list(1000)
+    duvidas = await db.duvidas.find(query).sort("_id", 1).skip(skip).limit(limit).to_list(limit)
     return duvidas
 
 @router.get("/{id}", response_model=Duvida)

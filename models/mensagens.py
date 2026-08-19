@@ -8,11 +8,9 @@ class Mensagem(BaseDBModel):
     texto: str
     horario: str
 
-class MensagemCreate(BaseModel):
+class MensagemWSIn(BaseModel):
     destinatario: str
-    remetente: str
     texto: str
-    horario: str
 
 class MensagemUpdate(BaseModel):
     destinatario: Optional[str] = None

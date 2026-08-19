@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import List, Optional
 from bson import ObjectId
 from database import get_db
@@ -19,6 +19,8 @@ async def create_material_estudo(material_estudo: MaterialEstudoCreate, current_
 async def list_materiais_estudo(
     materia: Optional[str] = None,
     autor: Optional[str] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     current_user: dict = Depends(get_current_user),
 ):
     db = get_db()
@@ -32,7 +34,7 @@ async def list_materiais_estudo(
     if autor is not None:
         query["autor"] = autor
 
-    materiais = await db.materiais_estudo.find(query).to_list(1000)
+    materiais = await db.materiais_estudo.find(query).sort("_id", 1).skip(skip).limit(limit).to_list(limit)
     return materiais
 
 @router.get("/{id}", response_model=MaterialEstudo)

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import connect_to_mongo, close_mongo_connection
 from routes import router as api_router
+from config import ALLOWED_ORIGINS
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,12 +23,7 @@ app = FastAPI(
 # Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://e-monitorwebapi.onrender.com",
-        "https://e-monitor.vercel.app"
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

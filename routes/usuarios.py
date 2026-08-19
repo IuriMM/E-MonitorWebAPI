@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import List
 from bson import ObjectId
+from pymongo.errors import DuplicateKeyError
 from database import get_db
 from models import Usuario, UsuarioCreate, UsuarioUpdate, UsuarioResponse, UsuarioLogin, Token
 from security import get_password_hash, verify_password
@@ -13,7 +14,10 @@ async def create_usuario(usuario: UsuarioCreate):
     db = get_db()
     usuario_dict = usuario.model_dump()
     usuario_dict["senha"] = get_password_hash(usuario_dict["senha"])
-    result = await db.usuarios.insert_one(usuario_dict)
+    try:
+        result = await db.usuarios.insert_one(usuario_dict)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail="Matrícula já cadastrada")
     created_usuario = await db.usuarios.find_one({"_id": result.inserted_id})
     return created_usuario
 
@@ -27,14 +31,18 @@ async def login(credentials: UsuarioLogin):
     if not verify_password(credentials.senha, usuario["senha"]):
         raise HTTPException(status_code=401, detail="Matrícula ou senha incorretos")
 
-    access_token = create_access_token(str(usuario["_id"]), usuario["matricula"])
+    access_token = create_access_token(str(usuario["_id"]), usuario["matricula"], usuario["nome"])
     return Token(access_token=access_token, usuario=usuario)
 
 
 @router.get("/", response_model=List[UsuarioResponse])
-async def list_usuarios(current_user: dict = Depends(get_current_user)):
+async def list_usuarios(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
+):
     db = get_db()
-    usuarios = await db.usuarios.find().to_list(1000)
+    usuarios = await db.usuarios.find({}, {"senha": 0}).sort("_id", 1).skip(skip).limit(limit).to_list(limit)
     return usuarios
 
 @router.get("/{id}", response_model=UsuarioResponse)
@@ -42,7 +50,7 @@ async def get_usuario(id: str, current_user: dict = Depends(get_current_user)):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
-    usuario = await db.usuarios.find_one({"_id": ObjectId(id)})
+    usuario = await db.usuarios.find_one({"_id": ObjectId(id)}, {"senha": 0})
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario not found")
     return usuario
@@ -60,11 +68,14 @@ async def update_usuario(id: str, usuario_update: UsuarioUpdate, current_user: d
         update_data["senha"] = get_password_hash(update_data["senha"])
 
     if update_data:
-        result = await db.usuarios.update_one({"_id": ObjectId(id)}, {"$set": update_data})
+        try:
+            result = await db.usuarios.update_one({"_id": ObjectId(id)}, {"$set": update_data})
+        except DuplicateKeyError:
+            raise HTTPException(status_code=409, detail="Matrícula já cadastrada")
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Usuario not found")
 
-    updated_usuario = await db.usuarios.find_one({"_id": ObjectId(id)})
+    updated_usuario = await db.usuarios.find_one({"_id": ObjectId(id)}, {"senha": 0})
     return updated_usuario
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

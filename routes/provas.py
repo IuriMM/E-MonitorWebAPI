@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import List
 from bson import ObjectId
 from database import get_db
@@ -16,9 +16,13 @@ async def create_prova(prova: ProvaCreate, current_user: dict = Depends(get_curr
     return created_prova
 
 @router.get("/", response_model=List[Prova])
-async def list_provas(current_user: dict = Depends(get_current_user)):
+async def list_provas(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
+):
     db = get_db()
-    provas = await db.provas.find().to_list(1000)
+    provas = await db.provas.find().sort("_id", 1).skip(skip).limit(limit).to_list(limit)
     return provas
 
 @router.get("/{id}", response_model=Prova)
