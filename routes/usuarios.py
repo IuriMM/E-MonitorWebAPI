@@ -12,6 +12,10 @@ router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 @router.post("/", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
 async def create_usuario(usuario: UsuarioCreate):
     db = get_db()
+    permitida = await db.matriculas_permitidas.find_one({"matricula": usuario.matricula})
+    if not permitida:
+        raise HTTPException(status_code=403, detail="Matrícula não autorizada para cadastro. Fale com a coordenação.")
+
     usuario_dict = usuario.model_dump()
     usuario_dict["senha"] = get_password_hash(usuario_dict["senha"])
     # papel nunca vem do cliente: cadastro público sempre nasce aluno.

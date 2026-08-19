@@ -22,6 +22,7 @@ async def create_indexes():
     await db.duvidas.create_index([("materia", 1), ("status", 1)])
     await db.mensagens.create_index([("remetente", 1), ("destinatario", 1)])
     await db.materiais_estudo.create_index([("materia", 1), ("autor", 1)])
+    await db.matriculas_permitidas.create_index("matricula", unique=True)
 
 async def backfill_papel_usuarios():
     """Usuários cadastrados antes do campo `papel` existir não o têm no Mongo.
