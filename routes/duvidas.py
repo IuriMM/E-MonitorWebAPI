@@ -58,6 +58,14 @@ async def update_duvida(id: str, duvida_update: DuvidaUpdate, current_user: dict
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
 
+    duvida_existente = await db.duvidas.find_one({"_id": ObjectId(id)})
+    if not duvida_existente:
+        raise HTTPException(status_code=404, detail="Duvida not found")
+
+    is_autor = duvida_existente.get("usuario") == str(current_user["_id"])
+    if not is_autor and current_user["papel"] not in (Papel.MONITOR, Papel.ADMIN):
+        raise HTTPException(status_code=403, detail="Só o autor da dúvida ou monitor/admin pode editá-la")
+
     if duvida_update.usuario is not None:
         if not ObjectId.is_valid(duvida_update.usuario):
             raise HTTPException(status_code=400, detail="Invalid Usuario ID")
@@ -65,7 +73,7 @@ async def update_duvida(id: str, duvida_update: DuvidaUpdate, current_user: dict
         if not usuario_exists:
             raise HTTPException(status_code=404, detail="Usuario not found")
 
-    if duvida_update.status is not None and current_user["papel"] not in (Papel.MONITOR, Papel.ADMIN):
+    if duvida_update.status is not None and duvida_update.status != duvida_existente.get("status") and current_user["papel"] not in (Papel.MONITOR, Papel.ADMIN):
         raise HTTPException(status_code=403, detail="Só monitor/admin pode alterar o status da dúvida")
 
     update_data = {k: v for k, v in duvida_update.model_dump().items() if v is not None}
