@@ -13,7 +13,6 @@ class MensagemWSIn(BaseModel):
     texto: str
 
 class MensagemUpdate(BaseModel):
-    destinatario: Optional[str] = None
-    remetente: Optional[str] = None
+    # SECURITY FIX: Removed remetente, destinatario, horario from update schema
+    # to prevent Mass Assignment and unauthorized modification of metadata.
     texto: Optional[str] = None
-    horario: Optional[str] = None
