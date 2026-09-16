@@ -2,3 +2,8 @@
 **Vulnerability:** Insecure Direct Object Reference (IDOR) / Missing Ownership Check in the `PUT /duvidas/{id}` endpoint. An authenticated user could update any other user's doubt because the endpoint did not check if the current user was the owner of the resource being updated.
 **Learning:** Sometimes ownership checks are correctly implemented in destructive endpoints like `DELETE` but missed in `PUT` / `PATCH` endpoints. We must enforce ownership checks on all endpoints that modify a resource, retrieving the existing resource before applying the update.
 **Prevention:** Always retrieve the entity from the database and verify the `current_user` matches the entity owner (or has the appropriate admin/monitor roles) *before* processing the update payload.
+
+## 2024-05-18 - IDOR in Message Updates
+**Vulnerability:** Insecure Direct Object Reference (IDOR) and Impersonation in the `PUT /mensagens/{id}` endpoint. Any participant in the conversation could edit messages they received. Additionally, because the `MensagemUpdate` model included `remetente` and `destinatario`, a malicious user could modify those fields and impersonate other users or reroute messages.
+**Learning:** Checking that a user is "part of a resource" (like a conversation participant) is insufficient for edit permissions; strict ownership must be enforced (e.g., only the sender can edit). Additionally, models used for updates (`Update` schemas) must strictly exclude immutable fields (like author, recipient, timestamp) to prevent tampering.
+**Prevention:** Restrict `PUT`/`PATCH` schemas to only the fields that are actually allowed to be modified by the user. Always enforce strict ownership (e.g. `current_user == resource.owner`) rather than just checking relationship to the resource.
