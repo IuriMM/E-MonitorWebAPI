@@ -43,7 +43,7 @@ def _is_monitor_da_materia(current_user: dict, materia: dict) -> bool:
     return current_user["nome"] in materia.get("monitores", [])
 
 @router.put("/{id}", response_model=Materia)
-async def update_materia(id: str, materia_update: MateriaUpdate, current_user: dict = Depends(get_current_user)):
+async def update_materia(id: str, materia_update: MateriaUpdate, current_user: dict = Depends(require_role(Papel.MONITOR, Papel.ADMIN))):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
@@ -61,7 +61,7 @@ async def update_materia(id: str, materia_update: MateriaUpdate, current_user: d
     return updated_materia
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_materia(id: str, current_user: dict = Depends(get_current_user)):
+async def delete_materia(id: str, current_user: dict = Depends(require_role(Papel.MONITOR, Papel.ADMIN))):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")

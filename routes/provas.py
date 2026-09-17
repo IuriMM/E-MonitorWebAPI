@@ -45,7 +45,7 @@ async def get_prova(id: str, current_user: dict = Depends(get_current_user)):
     return prova
 
 @router.put("/{id}", response_model=Prova)
-async def update_prova(id: str, prova_update: ProvaUpdate, current_user: dict = Depends(get_current_user)):
+async def update_prova(id: str, prova_update: ProvaUpdate, current_user: dict = Depends(require_role(Papel.MONITOR, Papel.ADMIN))):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
@@ -62,7 +62,7 @@ async def update_prova(id: str, prova_update: ProvaUpdate, current_user: dict = 
     return updated_prova
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_prova(id: str, current_user: dict = Depends(get_current_user)):
+async def delete_prova(id: str, current_user: dict = Depends(require_role(Papel.MONITOR, Papel.ADMIN))):
     db = get_db()
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid ID")
