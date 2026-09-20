@@ -2,3 +2,8 @@
 **Vulnerability:** Insecure Direct Object Reference (IDOR) / Missing Ownership Check in the `PUT /duvidas/{id}` endpoint. An authenticated user could update any other user's doubt because the endpoint did not check if the current user was the owner of the resource being updated.
 **Learning:** Sometimes ownership checks are correctly implemented in destructive endpoints like `DELETE` but missed in `PUT` / `PATCH` endpoints. We must enforce ownership checks on all endpoints that modify a resource, retrieving the existing resource before applying the update.
 **Prevention:** Always retrieve the entity from the database and verify the `current_user` matches the entity owner (or has the appropriate admin/monitor roles) *before* processing the update payload.
+
+## 2025-02-26 - Mass Assignment & Spoofing in Messaging
+**Vulnerability:** Mass assignment allowed updating the sender and recipient fields on messages. Furthermore, authorization checks incorrectly permitted ANY participant in a conversation (sender or recipient) to modify or delete the message.
+**Learning:** In update models (Pydantic), omitting immutable fields is crucial to prevent users from spoofing attributes (like the sender). Also, participation in a resource doesn't equate to ownership; only the sender should be able to alter a message.
+**Prevention:** Strictly restrict Pydantic update models to only fields meant to be modified. On update/delete endpoints, explicitly enforce that the current user is the specific owner/author of the resource, not just a participant.
