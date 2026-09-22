@@ -13,7 +13,5 @@ class MensagemWSIn(BaseModel):
     texto: str
 
 class MensagemUpdate(BaseModel):
-    destinatario: Optional[str] = None
-    remetente: Optional[str] = None
+    # Security: Apenas o texto pode ser editado. Remetente, destinatario e horario são imutáveis.
     texto: Optional[str] = None
-    horario: Optional[str] = None
