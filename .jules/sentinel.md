@@ -2,3 +2,8 @@
 **Vulnerability:** Insecure Direct Object Reference (IDOR) / Missing Ownership Check in the `PUT /duvidas/{id}` endpoint. An authenticated user could update any other user's doubt because the endpoint did not check if the current user was the owner of the resource being updated.
 **Learning:** Sometimes ownership checks are correctly implemented in destructive endpoints like `DELETE` but missed in `PUT` / `PATCH` endpoints. We must enforce ownership checks on all endpoints that modify a resource, retrieving the existing resource before applying the update.
 **Prevention:** Always retrieve the entity from the database and verify the `current_user` matches the entity owner (or has the appropriate admin/monitor roles) *before* processing the update payload.
+
+## 2025-09-25 - Mass Assignment and Authorization Bypass in Mensagens
+**Vulnerability:** The `MensagemUpdate` model allowed mass assignment of `remetente`, `destinatario`, and `horario` fields, meaning users could potentially impersonate others or modify message timestamps. Furthermore, the authorization logic in `update_mensagem` and `delete_mensagem` endpoints only checked if the user participated in the conversation, allowing recipients to edit or delete messages sent to them by others.
+**Learning:** Pydantic models for update operations must explicitly exclude immutable fields to prevent mass assignment spoofing. Authorization logic should strictly verify that the user requesting a modification or deletion is the exact owner (e.g., sender) of the specific resource, not just a participant.
+**Prevention:** Review all `*Update` Pydantic models to ensure they only expose mutable fields. Apply precise authorization checks on update and delete endpoints matching the resource creator/owner.
