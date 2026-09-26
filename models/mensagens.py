@@ -13,7 +13,6 @@ class MensagemWSIn(BaseModel):
     texto: str
 
 class MensagemUpdate(BaseModel):
-    destinatario: Optional[str] = None
-    remetente: Optional[str] = None
+    # SECURITY FIX: Remove destinatario and remetente to prevent mass assignment spoofing
     texto: Optional[str] = None
     horario: Optional[str] = None
