@@ -13,7 +13,4 @@ class MensagemWSIn(BaseModel):
     texto: str
 
 class MensagemUpdate(BaseModel):
-    destinatario: Optional[str] = None
-    remetente: Optional[str] = None
     texto: Optional[str] = None
-    horario: Optional[str] = None
