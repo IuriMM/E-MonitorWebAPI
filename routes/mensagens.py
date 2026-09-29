@@ -89,8 +89,8 @@ async def update_mensagem(id: str, mensagem_update: MensagemUpdate, current_user
     mensagem = await db.mensagens.find_one({"_id": ObjectId(id)})
     if not mensagem:
         raise HTTPException(status_code=404, detail="Mensagem not found")
-    if current_user["nome"] not in (mensagem["remetente"], mensagem["destinatario"]):
-        raise HTTPException(status_code=403, detail="Você não participa desta conversa")
+    if current_user["nome"] != mensagem["remetente"]:
+        raise HTTPException(status_code=403, detail="Só o remetente pode editar esta mensagem")
 
     update_data = {k: v for k, v in mensagem_update.model_dump().items() if v is not None}
     if update_data:
@@ -114,8 +114,8 @@ async def delete_mensagem(id: str, current_user: dict = Depends(get_current_user
     mensagem = await db.mensagens.find_one({"_id": ObjectId(id)})
     if not mensagem:
         raise HTTPException(status_code=404, detail="Mensagem not found")
-    if current_user["nome"] not in (mensagem["remetente"], mensagem["destinatario"]):
-        raise HTTPException(status_code=403, detail="Você não participa desta conversa")
+    if current_user["nome"] != mensagem["remetente"]:
+        raise HTTPException(status_code=403, detail="Só o remetente pode excluir esta mensagem")
 
     result = await db.mensagens.delete_one({"_id": ObjectId(id)})
     if result.deleted_count == 0:
